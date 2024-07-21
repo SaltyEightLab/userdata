@@ -1,13 +1,6 @@
 package com.example.userdate.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import java.util.Set;
 
 @Entity
@@ -15,20 +8,25 @@ import java.util.Set;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // プライマリキーとして追加
+    private Long id;
 
-    @Column(nullable = false)
+    @Column
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
+    private String password;
 
     @OneToMany(mappedBy = "email", fetch = FetchType.LAZY)
     private Set<UserData> userData;
 
+    // コンストラクタ
     public User() {
     }
 
+    // ゲッターとセッター
     public Long getId() {
         return id;
     }
@@ -51,6 +49,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Set<UserData> getUserData() {

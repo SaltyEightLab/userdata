@@ -1,0 +1,101 @@
+name: Deploy Seatarranger Userdata
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  AWS_REGION: ap-northeast-1
+  ##ECS_SERVICE: sacicd-service
+  ##ECS_CLUSTER: sacicd-cluster
+  ECS_SERVICE: seatarranger-userdata-service
+  ECS_CLUSTER: seatarranger-cluster
+  ECS_TASK_DEFINITION: .aws/task-definition.json
+
+permissions:
+  contents: read
+
+jobs:
+# API Container Build/Test
+## Get Source
+## Build/Test
+## Docker Image Build
+  # APIコンテナのテストとビルドを行うジョブ
+  userdata-test-build-image:
+    name: Userdata Container - Test and Build  # ジョブ名
+    runs-on: ubuntu-20.04  # ジョブを実行する仮想環境のOSを指定
+    timeout-minutes: 10  # タイムアウトを10分に設定
+    defaults:  # デフォルト設定
+      run:
+        working-directory: userdate  # デフォルトの作業ディレクトリを'api'に指定
+  
+    steps:  # ジョブで実行するステップを定義
+      - uses: actions/checkout@v3  # GitHubリポジトリのコードをチェックアウト
+
+      - name: Build an Image and Run Tests  # Dockerイメージをビルドし、テストを実行
+        run: |
+          docker image build --target production -t temp_userdata_image_name:latest .
+
+      - name: Configure AWS credentials  # AWSの認証情報を設定
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}  # AWSアクセスキーID
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # AWSシークレットアクセスキー
+          aws-region: ${{ env.AWS_REGION }}  # AWSのリージョンを設定
+
+## Login AWS
+      - name: Login to Amazon ECR  # Amazon ECRにログイン
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1  # Amazon ECRログイン用のActionを使用
+
+## push image to ECR
+      - name: Push the image to Amazon ECR  # ビルドしたDockerイメージをAmazon ECRにプッシュ
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  # ECRのレジストリURL
+          ECR_REPOSITORY: ${{ secrets.AWS_ECR_USERDATA_SERVER_REPOSITORY }}  # ECRのリポジトリ名
+        run: |
+          docker image tag temp_userdata_image_name:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+
+# Deploy
+## Get Source
+## Login AWS
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04 
+    needs: [userdata-test-build-image]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+## Edit Task Definition
+      - name: Fill in the new image ID in the Amazon ECS task definition for userdata
+        id: render-userdata-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: userdata
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_USERDATA_SERVER_REPOSITORY }}
+
+## Deploy
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-userdata-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
