@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;  // LocalDateからLocalDateTimeに変更
+import java.util.UUID;
+import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "user_data")
@@ -24,8 +26,14 @@ public class UserData {
     @Column(nullable = false)
     private String jsonData;
 
+    @Column(nullable = false, columnDefinition = "UUID DEFAULT gen_random_uuid()")
+    @UuidGenerator
+    private UUID hashValue;
+
     public UserData() {
+        this.hashValue = UUID.randomUUID();
     }
+
 
     public Long getId() {
         return id;
@@ -57,5 +65,13 @@ public class UserData {
 
     public void setJsonData(String jsonData) {
         this.jsonData = jsonData;
+    }
+
+    public UUID getHashValue() {
+        return hashValue;
+    }
+
+    public void setHashValue(UUID hashValue) {
+        this.hashValue = hashValue;
     }
 }

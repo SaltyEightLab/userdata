@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 import com.example.userdate.model.UserData;
 import com.example.userdate.service.UserDataService;
 import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 
 @RestController
@@ -37,8 +39,19 @@ public class UserDataController {
     public ResponseEntity<UserData> saveUserData(@RequestBody UserData userData) {
         // デバッグ用に受け取ったデータをログに出力
         System.out.println("Received userData: " + userData);
-    
+
         UserData savedUserData = userDataService.saveUserData(userData);
         return ResponseEntity.ok(savedUserData);
+    }
+
+    @DeleteMapping("/delete/{hashValue}")
+    public ResponseEntity<Void> deleteUserDataByHashValue(@PathVariable String hashValue) {
+        try {
+            UUID uuid = UUID.fromString(hashValue);
+            userDataService.deleteUserDataByHashValue(uuid);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

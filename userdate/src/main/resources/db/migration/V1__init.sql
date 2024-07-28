@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS user_data (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     data_date TIMESTAMP NOT NULL,  -- DATEからTIMESTAMPに変更
-    json_data TEXT NOT NULL
+    json_data TEXT NOT NULL,
+    hash_value UUID NOT NULL
     -- FOREIGN KEY (email) REFERENCES users(email)
 );
 
@@ -19,7 +20,7 @@ INSERT INTO users (username, email) VALUES ('SaltyEight', 'hachiman_hachi@icloud
 
 
 -- ユーザーデータの追加
-INSERT INTO user_data (email, data_date, json_data) VALUES ('hachiman_hachi@icloud.com', '2024-06-26 15:30:00+09', '{
+INSERT INTO user_data (email, data_date, json_data, hash_value) VALUES ('hachiman_hachi@icloud.com', '2024-06-26 15:30:00+09', '{
     "rows": 5,
     "columns": 6,
     "perfectSeatArrangeMode": true,
@@ -922,5 +923,5 @@ INSERT INTO user_data (email, data_date, json_data) VALUES ('hachiman_hachi@iclo
             "gender": "IsNotToBeUsed"
         }
     ]
-}');
+}', gen_random_uuid());
 

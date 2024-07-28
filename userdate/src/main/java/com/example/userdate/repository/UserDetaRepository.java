@@ -3,6 +3,7 @@ package com.example.userdate.repository;
 import com.example.userdate.model.UserData;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,4 +17,10 @@ public interface UserDetaRepository extends JpaRepository<UserData, Long> {
 
     // ページングをサポートするメソッドを追加
     Page<UserData> findByEmailOrderByDataDateDesc(String email, Pageable pageable);
+
+    // ハッシュ値に基づいてユーザーデータを検索するメソッドを追加
+    UserData findByHashValue(UUID hashValue);
+
+    // ハッシュ値に基づいてユーザーデータを削除するメソッドを追加
+    void deleteByHashValue(UUID hashValue);
 }

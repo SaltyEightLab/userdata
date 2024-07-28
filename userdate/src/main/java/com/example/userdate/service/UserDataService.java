@@ -6,9 +6,12 @@ import com.example.userdate.model.UserData;
 import com.example.userdate.repository.UserDetaRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserDataService {
@@ -48,5 +51,13 @@ public class UserDataService {
     // ユーザーデータを削除
     public void deleteUserData(Long id) {
         userDetaRepository.deleteById(id);
+    }
+
+        @Transactional
+    public void deleteUserDataByHashValue(UUID hashValue) {
+        UserData userData = userDetaRepository.findByHashValue(hashValue);
+        if (userData != null) {
+            userDetaRepository.delete(userData);
+        }
     }
 }
